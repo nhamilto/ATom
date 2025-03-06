@@ -429,8 +429,14 @@ class CovarianceMatrices:
         Returns:
             None
         """
-        # calculate B_TT, B_uu, B_vv, B_uv
-        self.calculateCovariances()
+
+        if self.covarianceSource == "model":
+            # calculate B_TT, B_uu, B_vv, B_uv
+            self.calculateCovariances()
+        elif self.covarianceSource == "data":
+            self.loadCovariances(self.covarianceFilePath)
+            print(self.ds)
+            pass
 
         interpolationPoints = []
 
@@ -460,68 +466,33 @@ class CovarianceMatrices:
             Bdd = self.dataDataCovarianceMatrix()
             self.ds["Bdd"] = Bdd
 
-        # #TODO finish generalizing the method to non-stationary conditions someday...
+        # #TODO generalizie the method to non-stationary conditions ...
         # elif self.ds.advectionScheme == "general":
-        #     for targetFrame, _ in enumerate(self.ds.frame):
-        #         # make array of advection velocities, bulk temperature, and bulk speed of sound
-        #         advectionVelocity = self.ds.advectionVelocity.isel(
-        #             frame=self.frameSets[targetFrame, :]
-        #         )
-        #         advectionDistance = advectionVelocity * self.ds.timeDelay * self.stencil
-        #         advectionDistance = xr.DataArray(
-        #             data=advectionDistance.values,
-        #             coords={
-        #                 "coord": ["easting", "northing"],
-        #                 "frame": advectionDistance.frame,
-        #             },
-        #         )
+        #     pass
 
-        #         # add advection distance to integralPaths for each time delay and advectionVelocity pair
-        #         interpolationPointsSubset = []
-        #         for offset in advectionDistance.transpose("frame", "coord"):
-        #             interpolationPointsSubset.append(
-        #                 self.atarray.integralPoints + offset
-        #             )
-        #         interpolationPoints.append(
-        #             xr.concat(interpolationPointsSubset, dim="tdsiFrame")
-        #         )
-        #     self.ds.interpolationPoints = xr.concat(
-        #         interpolationPoints, dim="target_frame"
-        #     )
+    def loadCovariances(self, filePath: str) -> None:
+        """
+        Loads covariance data from a specified file and stores it in the instance's dataset.
 
-        # interpolate Bmd for each time delay and advectionVelocity pair
+        Args:
+            filePath (str): The path to the file containing the covariance data.
 
-        # self.modelDataCovarianceMatrix()
-        # Bmd.append()
-        # interpolate covariance matrices for advected integralPoints
+        Returns:
+            None
+        """
+        # Load the covariance data from the file
+        corr = xr.load_dataset(filePath)
 
-        # integrate along advected integralPaths
+        renameVars = {"u": "uu", "v": "vv", "w": "ww", "T": "TT"}
+        for var in renameVars:
+            if var in list(corr.data_vars):
+                corr = corr.rename({var: renameVars[var]})
 
-        # # Rdd needs to be calculated only once
-        # # Rmd needs to be calculated for each time delay and advectionVelocity pair
-        # for timeDelay, advectionVelocity, T0, c0 in zip(timeDelays, advectionVelocitys, TBulk, cBulk):
-        #     # create a Bmd matrix for each timedelay and advectionVelocity pair
-        #     Bmd.append(self.modelDataCovarianceMatrix(TBulk=T0, cBulk=c0))
-        #     Bdd.append(self.dataDataCovarianceMatrix(TBulk=T0, cBulk=c0))
-
-        # # concatenate the component Bmd matrices, reindex
-        # Rmd = xr.concat(Bmd, dim="nframe")
-        # Rmd = Rmd.unstack().stack(pathID=["spk", "mic", "nframe"])
-        # Rmd = Rmd.dropna(dim="pathID", how="all")
-
-        # Rdd = _blockToeplitz(Bdd)
-        # Rdd = xr.DataArray(
-        #     data=Rdd,
-        #     coords={
-        #         "pathID": Rmd.pathID,
-        #         "pathID_duplicate": Rmd.pathID,
-        #     },
-        # )
-
-        # self.ds["Rmd"] = Rmd
-        # self.ds["Rdd"] = Rdd
-
-        # self.ds = self.ds.stack(modelVar=["variable", "x", "y"])
+        # Store the loaded data in the instance's dataset
+        self.ds["B_TT"] = corr["TT"]
+        self.ds["B_uu"] = corr["uu"]
+        self.ds["B_vv"] = corr["vv"]
+        self.ds["B_uv"] = corr["uv"]
 
     def _checkDomainLimits(
         self,
@@ -615,26 +586,6 @@ class CovarianceMatrices:
 
     def describe(self):
         return utils.describe_dataset(self.ds)
-
-
-def _blockToeplitz(matList: list):
-    """
-    This function takes a list of matrices and constructs a block Toeplitz matrix.
-
-    #TODO Theory suggest that the lower triangular region of the block Toeplitz matrix should actually be rotated 180 degrees A = np.flip(A, axis=[0,1]).
-
-    Args:
-        matList (list): A list of 2D numpy arrays representing the matrices to be used in the block Toeplitz matrix.
-
-    Returns:
-        numpy.ndarray: A block Toeplitz matrix constructed from the input list of matrices.
-    """
-    mirrorMatList = matList[-1:0:-1] + matList
-    blockMatList = [
-        mirrorMatList[g : g + len(matList)] for g in np.arange(len(matList) - 1, -1, -1)
-    ]
-
-    return np.block(blockMatList)
 
 
 def _defineStencil(
