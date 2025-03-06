@@ -32,6 +32,9 @@ class CovarianceMatrices:
         atarray: xr.Dataset,
         linearSystem: xr.Dataset,
     ):
+        for key, value in configDict.items():
+            setattr(self, key, value)
+
         self.modelGrid = modelGrid
         self.atarray = atarray
 
@@ -435,8 +438,6 @@ class CovarianceMatrices:
             self.calculateCovariances()
         elif self.covarianceSource == "data":
             self.loadCovariances(self.covarianceFilePath)
-            print(self.ds)
-            pass
 
         interpolationPoints = []
 
