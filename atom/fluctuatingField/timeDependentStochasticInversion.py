@@ -23,15 +23,14 @@ class TimeDependentStochasticInversion:
         bulkFlowData: xr.Dataset,
         stencil: Iterable[int] = [-1, 0, 1],
         frameSets: Iterable[int] = [-2, -1, 0, 1, 2],
-        retrieval: str = "single",  # also accepts 'all' #TODO remove this flag?
     ):
         self.modelGrid = modelGrid
         self.atarray = atarray
         self.covarMatrices = covarMatrices
         self.bulkFlowData = bulkFlowData
-        self.retrieval = retrieval
         self.stencil = stencil
         self.frameSets = frameSets
+        self.ds = xr.Dataset()
 
     def optimalStochasticInverseOperator(self):
         """
@@ -117,7 +116,6 @@ class TimeDependentStochasticInversion:
             .stack(pathID=["spk", "mic"])
             .dropna(dim="pathID")
         )
-        # self.ds["dataVector"] = dataVector
 
         if self.covarMatrices.nFrames > 0:
             # create array of time delays of length nFrames
@@ -140,10 +138,7 @@ class TimeDependentStochasticInversion:
             dataVector = xr.concat(dataVectorList, dim="frame")
 
         dataVector["frame"] = self.covarMatrices.frame
-        # dataVector = dataVector.drop_vars(["pathID", "spk", "mic"])
-        # dataVector["pathID"] = self.ds.pathID
-
-        self.ds["dataVector"] = dataVector  # .dropna(dim="pathID", how="all")
+        self.ds["dataVector"] = dataVector
 
     def repackDataVector(self):
 
