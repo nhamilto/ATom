@@ -1,0 +1,12 @@
+sigmaT: 0.14
+lT: 15.0
+sigmaU: 0.72
+lu: 15.0
+sigmaV: 0.42
+lv: null # if value is null (None), default to lv = lu
+timeDelay: 0.15
+nFrames: 0
+alignment: "center"
+advectionScheme: "stationary"
+covarianceSource: "data"
+covarianceFilePath: null # "~/Documents/Projects/ATom/data/mergedCorrelationData.nc"

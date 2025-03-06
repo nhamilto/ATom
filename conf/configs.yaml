@@ -1,10 +1,10 @@
 defaults:  
-  - atarray: array_20220628
-  - audiodata: audiodata_20220628
-  - auxdata: auxdata_20220628
-  - constants: constants_20220628
-  - traveltimeextractor: traveltimeextractor_20220628
-  - covariancematrix: covariancematrix_20240416
+  - atarray: atarray
+  - audiodata: audiodata
+  - auxdata: auxdata
+  - constants: constants
+  - traveltimeextractor: traveltimeextractor
+  - covariancematrix: covariancematrix
   - _self_  
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled

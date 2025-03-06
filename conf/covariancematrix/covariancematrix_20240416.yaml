@@ -1,9 +1,0 @@
-sigmaT: 0.14
-lT: 15.0
-sigmaU: 0.72
-sigmaV: 0.42
-l: 15.0
-timeDelay: 0.0
-nFrames: 0
-alignment: "center"
-advectionScheme: "stationary"
